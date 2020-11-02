@@ -1,6 +1,7 @@
 <?php
 namespace PhalApi;
 
+use PhalApi\Exception\BadRequestException;
 use PhalApi\Exception\InternalServerErrorException;
 
 /**
@@ -35,8 +36,11 @@ use PhalApi\Exception\InternalServerErrorException;
  * @license     http://www.phalapi.net/license GPL 协议 GPL 协议
  * @link        http://www.phalapi.net/
  * @author      dogstar <chanzonghuang@gmail.com> 2014-10-02
+ *
+ * @exception 400 表示客户端参数错误
+ * @exception 404 表示接口服务不存在
+ * @exception 500 表示服务端内部错误
  */
-
 class Api {
 
     /**
@@ -56,7 +60,7 @@ class Api {
     /**
      * 获取规则解析后的接口参数
      * @param string $name 接口参数名字
-     * @throws Exception_InternalServerError 获取未设置的接口参数时，返回500
+     * @throws PhalApi\Exception\InternalServerErrorException 获取未设置的接口参数时，返回500
      * @return mixed
      */
     public function __get($name) {
@@ -83,11 +87,44 @@ class Api {
      * @return null
      */
     public function init() {
+        $this->checkRequestMethod();
+
         $this->createMemberValue();
 
         $this->filterCheck();
 
         $this->userCheck();
+    }
+
+    /**
+     * 检测请求方式
+     * 
+     * 根据接口方法@method注解，判断请求方式
+     *
+     * @throw \PhalApi\Exception\BadRequestException
+     */
+    protected function checkRequestMethod() {
+        $action = \PhalApi\DI()->request->getServiceAction();
+
+        try {
+            $rMethod = new \ReflectionMethod($this, $action);
+        } catch (\ReflectionException $ex) {
+            return;
+        }
+
+        $commentArr = explode("\n", $rMethod->getDocComment());
+        foreach ($commentArr as $comment) {
+            $comment = trim($comment);
+            $pos = stripos($comment, '@method');
+            if ($pos !== FALSE) {
+                if (isset($_SERVER['REQUEST_METHOD']) && stripos($comment, ' ' . $_SERVER['REQUEST_METHOD']) === FALSE) {
+                    throw new BadRequestException(
+                        T('request method not allowed, only {method}', array('method' => substr($comment, $pos + 8))), 4
+                    );
+                }
+                break;
+            }
+        }
     }
 
     /**
@@ -135,7 +172,7 @@ class Api {
             $rules = array_merge($allRules['*'], $rules);
         }
 
-        $apiCommonRules = DI()->config->get('app.apiCommonRules', array());
+        $apiCommonRules = $this->getApiCommonRules();
         if (!empty($apiCommonRules) && is_array($apiCommonRules)) {
             // fixed issue #22
             if ($this->isServiceWhitelist()) {
@@ -147,7 +184,25 @@ class Api {
             $rules = array_merge($apiCommonRules, $rules);
         }
 
+        // 过滤置为空的参数规则 @dogstar 20191215
+        foreach ($rules as $key => $rule) {
+            if ($rule === NULL || $rule === FALSE) {
+                unset($rules[$key]);
+            }
+        }
+
         return $rules;
+    }
+
+    /**
+     * 获取应用参数设置的规则
+     *
+     * 默认情况下读取app.apiCommonRules配置，可根据需要进行重载
+     * 
+     * @return array
+     */
+    protected function getApiCommonRules() {
+        return DI()->config->get('app.apiCommonRules', array());
     }
 
     /**
@@ -183,7 +238,7 @@ class Api {
 ```
      * 
      * @see Filter::check()
-     * @throws Exception_BadRequest 当验证失败时，请抛出此异常，以返回400
+     * @throws PhalApi\Exception\BadRequestException 当验证失败时，请抛出此异常，以返回400
      */
     protected function filterCheck() {
         // 过滤服务白名单
@@ -208,7 +263,7 @@ class Api {
      *
      * 可由开发人员根据需要重载，此通用操作一般可以使用委托或者放置在应用接口基类
      * 
-     * @throws Exception_BadRequest 当验证失败时，请抛出此异常，以返回400
+     * @throws PhalApi\Exception\BadRequestException 当验证失败时，请抛出此异常，以返回400
      */
     protected function userCheck() {
 

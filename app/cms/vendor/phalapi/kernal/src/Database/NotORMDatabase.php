@@ -71,9 +71,9 @@ use PhalApi\NotORM\Lite as NotORMLite;
 
 class NotORMDatabase /** implements Database */ {
 
-	/**
-	 * @var NotORM $_notorms NotORM的实例池
-	 */
+    /**
+     * @var NotORM $_notorms NotORM的实例池
+     */
     protected $_notorms = array();
 
     /**
@@ -200,6 +200,12 @@ class NotORMDatabase /** implements Database */ {
             );
         }
 
+        // 是否依然保留分表后缀，即便分表策略不存在时
+        // 旧版本是不保留，PhalApi 2.12.0 版本起支持配置成依然保留
+        $keepSuffixIfNoMap = isset($tableMap['keep_suffix_if_no_map']) 
+            ? $tableMap['keep_suffix_if_no_map'] 
+            : (isset($defaultMap['keep_suffix_if_no_map']) ? $defaultMap['keep_suffix_if_no_map'] : FALSE);
+
         $dbKey = NULL;
         $dbDefaultKey = NULL;
         if (!isset($tableMap['map'])) {
@@ -224,10 +230,10 @@ class NotORMDatabase /** implements Database */ {
                 break;
             }
         }
-        //try to usdbKeye default map if no perfect match
+        // 未匹配时，使用默认路由
         if ($dbKey === NULL) {
             $dbKey = $dbDefaultKey;
-            $rs['isNoSuffix'] = TRUE;
+            $rs['isNoSuffix'] = !$keepSuffixIfNoMap;
         }
 
         if ($dbKey === NULL) {
@@ -309,14 +315,37 @@ class NotORMDatabase /** implements Database */ {
             );
         }
 
+        // 具体驱动的连接选项
+        $defaultOptions = array(
+            \PDO::ATTR_TIMEOUT => 30,
+            \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
+        );
+        $driverOptions = isset($dbCfg['driver_options']) && is_array($dbCfg['driver_options']) ? $dbCfg['driver_options'] : array();
+        $driverOptions = $driverOptions + $defaultOptions; // 注意：这里只能使用相加，不能使用array_merge()，因为下标是数值
+
         // 创建PDO连接
-        $pdo = new PDO($dsn, $dbCfg['user'], $dbCfg['password']);
+        $pdo = new \PDO($dsn, $dbCfg['user'], $dbCfg['password'], $driverOptions);
+
+        // 取消将数值转换为字符串
+        if (empty($dbCfg['pdo_attr_string'])) {
+            $pdo->setAttribute(\PDO::ATTR_STRINGIFY_FETCHES, false);
+            $pdo->setAttribute(\PDO::ATTR_EMULATE_PREPARES, false);
+        }
 
         // 设置编码
-        $charset = isset($dbCfg['charset']) ? $dbCfg['charset'] : 'UTF8';
-        $pdo->exec("SET NAMES '{$charset}'");
+        $this->setDatabaseCharset($type, $dbCfg, $pdo);
 
         return $pdo;
+    }
+
+    protected function setDatabaseCharset($type, $dbCfg, $pdo) {
+        $charset = isset($dbCfg['charset']) ? $dbCfg['charset'] : 'UTF8';
+        if ($type == 'sqlserver' || $type == 'sqlsrv') {
+            // fixed: 'NAMES' is not a recognized SET option.
+            ini_set('mssql.charset', $charset);
+        } else {
+            $pdo->exec("SET NAMES '{$charset}'");
+        }
     }
 
     /**

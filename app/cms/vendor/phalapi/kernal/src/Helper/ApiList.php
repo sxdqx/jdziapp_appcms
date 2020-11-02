@@ -104,6 +104,8 @@ class ApiList extends ApiOnline
 
                     $title = '//请检测函数注释';
                     $desc = '//请使用@desc 注释';
+                    $methods = '';
+
                     $isMethodIgnore = false;
                     $docComment = $rMethod->getDocComment();
                     if ($docComment !== false) {
@@ -120,6 +122,13 @@ class ApiList extends ApiOnline
                             if (stripos($comment, '@ignore') !== false) {
                                 $isMethodIgnore = true;
                             }
+
+                            //@method注释
+                            $pos = stripos($comment, '@method');
+                            if ($pos !== FALSE) {
+                                $methods = substr($comment, $pos + 8);
+                                continue;
+                            }
                         }
                     }
 
@@ -132,6 +141,7 @@ class ApiList extends ApiOnline
                         'service' => $service,
                         'title' => $title,
                         'desc' => $desc,
+                        'methods' => $methods,
                     );
                 }
             }
@@ -174,9 +184,9 @@ class ApiList extends ApiOnline
     public function makeThemeButton($theme) {
         $curUrl = $_SERVER['SCRIPT_NAME'];
         if ($theme == 'fold') {
-            echo '<div style="float: right"><a href="' . $curUrl . '?type=expand">切换到展开版</a></div>';
+            echo '<div style="float: right"><a href="' . $curUrl . '?type=expand">'.\PhalApi\T('Expand All').'</a></div>';
         } else {
-            echo '<div style="float: right"><a href="' . $curUrl . '?type=fold">切换到折叠版</a></div>';
+            echo '<div style="float: right"><a href="' . $curUrl . '?type=fold">'.\PhalApi\T('Fold All').'</a></div>';
         }
     }
 

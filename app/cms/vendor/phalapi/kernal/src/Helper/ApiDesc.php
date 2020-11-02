@@ -23,12 +23,15 @@ class ApiDesc extends ApiOnline {
         $namespace  = \PhalApi\DI()->request->getNamespace();
         $api        = \PhalApi\DI()->request->getServiceApi();
         $action     = \PhalApi\DI()->request->getServiceAction();
+
+        $namespace  = str_replace('_', '\\', $namespace); // 支持多级命名空间，扩展类库接口需要用到 @dogstar 20200114
         $className  = '\\' . $namespace . '\\Api\\' . str_replace('_', '\\', ucfirst($api));
 
         $rules = array();
         $returns = array();
         $description = '';
         $descComment = '//请使用@desc 注释';
+        $methods = '';
         $exceptions = array();
 
         $projectName = $this->projectName;
@@ -78,6 +81,13 @@ class ApiDesc extends ApiOnline {
             $pos = stripos($comment, '@desc');
             if ($pos !== FALSE) {
                 $descComment = substr($comment, $pos + 5);
+                continue;
+            }
+
+            //@method注释
+            $pos = stripos($comment, '@method');
+            if ($pos !== FALSE) {
+                $methods = substr($comment, $pos + 8);
                 continue;
             }
 
