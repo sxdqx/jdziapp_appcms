@@ -15,6 +15,9 @@ return array(
         'db_mac_cms' => array(                       //服务器标记
             'type'      => 'mysql',                 //数据库类型，暂时只支持：mysql, sqlserver
             'host'      => '127.0.0.1',             //数据库域名
+            'name'      => 'maccms',               //数据库名字
+            'user'      => 'maccmsapp',                  //数据库用户名
+            'password'  => 'maccms',	                    //数据库密码
             'port'      => 3306,                    //数据库端口
             'charset'   => 'UTF8',                  //数据库字符集
         ),
