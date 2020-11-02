@@ -470,7 +470,6 @@ class Mov extends Api
         $update = array(
             "versionCode" => 118,
             "updateMsg" => "1.优化搜索错误提示，\n2.开屏广告、播放广告允许跳过，\n3.修改删除图标。",
-            "downloadUrl" => "http://ys.jdzi.vip/app/download/jdzi/android/jdzi.apk",
             "isForce" => true,
             "version" => "1.1.8"
         );
@@ -505,7 +504,6 @@ class Mov extends Api
      */
     public function getAdConfig()
     {
-    	static $url = "http://111.67.193.41:6061/";
     	
         $ad = array(
             "ad_splash" => array(
