@@ -19,7 +19,7 @@ private static $installed = array (
     'aliases' => 
     array (
     ),
-    'reference' => '52c203ee10e995c4a8734b7ae7b364f88f383b95',
+    'reference' => 'd5a7dffd6e0678b8a284e6f71cefcc46ac6aa570',
     'name' => 'phalapi/phalapi',
   ),
   'versions' => 
@@ -78,7 +78,7 @@ private static $installed = array (
       'aliases' => 
       array (
       ),
-      'reference' => '52c203ee10e995c4a8734b7ae7b364f88f383b95',
+      'reference' => 'd5a7dffd6e0678b8a284e6f71cefcc46ac6aa570',
     ),
     'phalapi/qrcode' => 
     array (
