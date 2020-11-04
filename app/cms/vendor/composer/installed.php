@@ -6,7 +6,7 @@
     'aliases' => 
     array (
     ),
-    'reference' => 'df9ca8e5c159e473ffa2fabe98a63935a5edee95',
+    'reference' => '52c203ee10e995c4a8734b7ae7b364f88f383b95',
     'name' => 'phalapi/phalapi',
   ),
   'versions' => 
@@ -65,7 +65,7 @@
       'aliases' => 
       array (
       ),
-      'reference' => 'df9ca8e5c159e473ffa2fabe98a63935a5edee95',
+      'reference' => '52c203ee10e995c4a8734b7ae7b364f88f383b95',
     ),
     'phalapi/qrcode' => 
     array (
